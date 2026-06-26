@@ -38,6 +38,9 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="MainForm.cs" />
+    <Compile Include="NativeMethods.cs" />
+    <Compile Include="ScriptDocument.cs" />
+    <Compile Include="UiControls.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

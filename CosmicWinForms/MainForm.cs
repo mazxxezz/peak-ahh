@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.IO;
 using System.Windows.Forms;
 
@@ -16,7 +15,7 @@ namespace CosmicWinForms
         private readonly Color gold = Color.FromArgb(212, 170, 62);
         private readonly Color muted = Color.FromArgb(104, 103, 94);
         private readonly List<ScriptDocument> scripts = new List<ScriptDocument>();
-        private readonly Timer uptimeTimer = new Timer();
+        private readonly System.Windows.Forms.Timer uptimeTimer = new System.Windows.Forms.Timer();
 
         private Panel editorHost;
         private Panel homeView;
@@ -204,7 +203,16 @@ namespace CosmicWinForms
             injectButton = AddRightButton(bar, "🔗 Inject", 146, false);
             injectButton.Click += (s, e) => SimulateInject();
             AddRightButton(bar, "🔔 Clients", 68, true);
-            bar.Resize += (s, e) => { foreach (Control c in bar.Controls) if (c.Tag is int) c.Left = bar.Width - (int)c.Tag; };
+            bar.Resize += (s, e) =>
+            {
+                foreach (Control c in bar.Controls)
+                {
+                    if (c.Tag != null)
+                    {
+                        c.Left = bar.Width - (int)c.Tag;
+                    }
+                }
+            };
         }
 
         private void AddNewScript()
@@ -270,7 +278,7 @@ namespace CosmicWinForms
             if (isInjected) return;
             injectButton.Text = "⏳ Injecting";
             SetStatus("Injecting UI state...");
-            var delay = new Timer { Interval = 900 };
+            var delay = new System.Windows.Forms.Timer { Interval = 900 };
             delay.Tick += (s, e) =>
             {
                 delay.Stop();
@@ -363,35 +371,5 @@ namespace CosmicWinForms
         private static void DrawBottomDivider(Graphics g, Rectangle bounds) { using (var pen = new Pen(Color.FromArgb(36, 36, 34))) g.DrawLine(pen, 7, bounds.Height - 52, bounds.Width - 12, bounds.Height - 52); }
         private void DragWindow(object sender, MouseEventArgs e) { if (e.Button == MouseButtons.Left) { NativeMethods.ReleaseCapture(); NativeMethods.SendMessage(Handle, 0xA1, 0x2, 0); } }
 
-        private sealed class ScriptDocument
-        {
-            public ScriptDocument(string name, string content) { Name = name; Content = content; }
-            public string Name { get; set; }
-            public string Content { get; set; }
-        }
-
-        private sealed class RoundedPanel : Panel { public int Radius { get; set; } = 8; protected override void OnPaint(PaintEventArgs e) { base.OnPaint(e); using (var path = new GraphicsPath()) { path.AddArc(0, 0, Radius, Radius, 180, 90); path.AddArc(Width - Radius - 1, 0, Radius, Radius, 270, 90); path.AddLine(Width - 1, Height - 1, 0, Height - 1); path.CloseFigure(); using (var pen = new Pen(Color.FromArgb(33, 33, 31))) e.Graphics.DrawPath(pen, path); } } }
-        private sealed class DashedPanel : Panel { public Color BorderColor { get; set; } protected override void OnPaint(PaintEventArgs e) { base.OnPaint(e); using (var pen = new Pen(BorderColor) { DashStyle = DashStyle.Dash }) e.Graphics.DrawRectangle(pen, 0, 0, Width - 1, Height - 1); } }
-        private sealed class LineNumberPanel : Panel
-        {
-            public int LineCount { get; set; } = 1;
-            protected override void OnPaint(PaintEventArgs e)
-            {
-                base.OnPaint(e);
-                using (var font = new Font("Consolas", 10F))
-                using (var brush = new SolidBrush(ForeColor))
-                {
-                    for (var i = 1; i <= Math.Min(LineCount + 1, 200); i++) e.Graphics.DrawString(i.ToString(), font, brush, 30, 14 + ((i - 1) * 21));
-                }
-            }
-        }
-    }
-
-    internal static class NativeMethods
-    {
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        internal static extern bool ReleaseCapture();
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        internal static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
     }
 }
