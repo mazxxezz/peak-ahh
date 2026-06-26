@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace CosmicWinForms
@@ -53,6 +55,7 @@ namespace CosmicWinForms
             BuildLayout();
             SelectScript(0);
             ShowScriptsView();
+            BuildLayout();
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -73,6 +76,7 @@ namespace CosmicWinForms
             titleBar.Controls.Add(CreateLabel("●", Color.FromArgb(73, 70, 60), new Font("Segoe UI", 8F), new Point(87, 13), new Size(16, 16)));
             statusLabel = CreateLabel("Ready", Color.FromArgb(126, 122, 104), Bold(9F), new Point(104, 12), new Size(420, 18));
             titleBar.Controls.Add(statusLabel);
+            titleBar.Controls.Add(CreateLabel("Inject me first (-> <-)", Color.FromArgb(126, 122, 104), Bold(9F), new Point(104, 12), new Size(180, 18)));
             titleBar.Controls.Add(CreateTitleButton("×", Width - 31));
             titleBar.Controls.Add(CreateTitleButton("□", Width - 66));
             titleBar.Controls.Add(CreateTitleButton("−", Width - 101));
@@ -83,6 +87,7 @@ namespace CosmicWinForms
             var activity = AddPanel(shell, DockStyle.Left, 48, surface);
             var sidebar = AddPanel(shell, DockStyle.Left, 238, surface);
             editorHost = AddPanel(shell, DockStyle.Fill, 0, background);
+            var editorHost = AddPanel(shell, DockStyle.Fill, 0, background);
 
             BuildActivityBar(activity);
             BuildSidebar(sidebar);
@@ -99,6 +104,8 @@ namespace CosmicWinForms
             scriptsButton.Click += (s, e) => ShowScriptsView();
             activity.Controls.Add(homeButton);
             activity.Controls.Add(scriptsButton);
+            activity.Controls.Add(CreateNavButton("⌂", 7, false));
+            activity.Controls.Add(CreateNavButton("</>", 48, true));
             activity.Controls.Add(CreateNavButton("▤", 96, false));
             activity.Controls.Add(CreateLabel("◎", muted, new Font("Segoe UI Symbol", 15F), new Point(14, activity.Height - 36), new Size(24, 24), AnchorStyles.Left | AnchorStyles.Bottom));
             activity.Paint += (s, e) => DrawBottomDivider(e.Graphics, activity.ClientRectangle);
@@ -131,6 +138,17 @@ namespace CosmicWinForms
             sidebar.Controls.Add(drop);
 
             RefreshScriptList();
+            sidebar.Controls.Add(CreateLabel("⌄  SCRIPTS (1)", Color.FromArgb(91, 89, 79), Bold(8F), new Point(12, 48), new Size(150, 20)));
+
+            var file = new Panel { BackColor = surfaceLight, Location = new Point(0, 66), Size = new Size(sidebar.Width, 25), Anchor = AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right };
+            file.Controls.Add(CreateLabel("📄", gold, new Font("Segoe UI Emoji", 9F), new Point(18, 3), new Size(22, 20)));
+            file.Controls.Add(CreateLabel("script_1.lua", Color.Gainsboro, Bold(8.5F), new Point(42, 5), new Size(150, 18)));
+            sidebar.Controls.Add(file);
+
+            var drop = new DashedPanel { BorderColor = Color.FromArgb(42, 42, 38), Location = new Point(10, sidebar.Height - 68), Size = new Size(sidebar.Width - 20, 58), Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom };
+            drop.Controls.Add(CreateLabel("⇧", muted, new Font("Segoe UI Symbol", 17F), new Point((drop.Width / 2) - 12, 10), new Size(30, 24), AnchorStyles.Top));
+            drop.Controls.Add(CreateLabel("Drop .lua or .txt files here", Color.FromArgb(72, 72, 65), new Font("Segoe UI", 8F), new Point(52, 35), new Size(150, 18)));
+            sidebar.Controls.Add(drop);
         }
 
         private void BuildEditor(Panel host)
@@ -167,6 +185,21 @@ namespace CosmicWinForms
                 gutter.Invalidate();
             };
             host.Controls.Add(editor);
+            var tab = new RoundedPanel { BackColor = surface, Radius = 6, Location = new Point(6, 8), Size = new Size(120, 28) };
+            tab.Controls.Add(CreateLabel("◰  script_1.lua  ×", Color.Gainsboro, Bold(8.5F), new Point(12, 6), new Size(105, 18)));
+            host.Controls.Add(tab);
+
+            var gutter = new Panel { BackColor = background, Location = new Point(0, 36), Size = new Size(58, host.Height - 74), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left };
+            gutter.Controls.Add(CreateLabel("1", Color.FromArgb(143, 124, 53), new Font("Consolas", 10F), new Point(30, 14), new Size(26, 18)));
+            gutter.Controls.Add(CreateLabel("2", Color.FromArgb(143, 124, 53), new Font("Consolas", 10F), new Point(30, 35), new Size(26, 18)));
+            gutter.Controls.Add(CreateLabel("3", gold, new Font("Consolas", 10F), new Point(30, 56), new Size(26, 18)));
+            host.Controls.Add(gutter);
+
+            var code = new CodePanel { BackColor = background, Location = new Point(58, 36), Size = new Size(host.Width - 100, host.Height - 74), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right };
+            code.Controls.Add(CreateLabel("--discord.gg/4r3XgYQdhn", Color.FromArgb(119, 111, 93), new Font("Consolas", 10F, FontStyle.Italic), new Point(6, 14), new Size(245, 18)));
+            code.Controls.Add(CreateLabel("print", Color.FromArgb(72, 141, 255), new Font("Consolas", 10F), new Point(6, 35), new Size(40, 18)));
+            code.Controls.Add(CreateLabel("(\"Cosmic on top!\")", Color.FromArgb(59, 236, 144), new Font("Consolas", 10F, FontStyle.Bold), new Point(46, 35), new Size(175, 18)));
+            host.Controls.Add(code);
 
             var minimap = new Panel { BackColor = Color.FromArgb(13, 14, 13), Dock = DockStyle.Right, Width = 96 };
             minimap.Paint += (s, e) =>
@@ -174,6 +207,7 @@ namespace CosmicWinForms
                 using (var pen = new Pen(Color.FromArgb(56, 48, 24))) e.Graphics.DrawLine(pen, minimap.Width - 3, 0, minimap.Width - 3, minimap.Height);
                 using (var pen = new Pen(gold)) e.Graphics.DrawLine(pen, minimap.Width - 4, 48, minimap.Width - 4, 94);
                 using (var brush = new SolidBrush(Color.FromArgb(55, 100, 95))) e.Graphics.DrawString("==--", new Font("Consolas", 3.5F), brush, 6, 1);
+                e.Graphics.DrawString("==--", new Font("Consolas", 3.5F), new SolidBrush(Color.FromArgb(55, 100, 95)), 6, 1);
             };
             host.Controls.Add(minimap);
         }
@@ -356,6 +390,13 @@ namespace CosmicWinForms
         private void SetStatus(string message)
         {
             statusLabel.Text = message;
+            AddActionButton(bar, "▷ Execute", 6, true);
+            AddActionButton(bar, "♙ Clear", 94, false);
+            AddActionButton(bar, "◴ Save", 170, false);
+            AddActionButton(bar, "▣ Open", 240, false);
+            AddRightButton(bar, "🔗 Inject", 146);
+            AddRightButton(bar, "🔔 Clients", 68, true);
+            bar.Resize += (s, e) => { foreach (Control c in bar.Controls) if (c.Tag is int offset) c.Left = bar.Width - offset; };
         }
 
         private Panel AddPanel(DockStyle dock, int size, Color color) { var p = new Panel { Dock = dock, BackColor = color }; if (dock == DockStyle.Top || dock == DockStyle.Bottom) p.Height = size; else if (dock == DockStyle.Left || dock == DockStyle.Right) p.Width = size; Controls.Add(p); p.BringToFront(); return p; }
